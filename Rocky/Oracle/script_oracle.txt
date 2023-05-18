@@ -1,0 +1,18 @@
+ALTER USER movie IDENTIFIED BY password;
+
+COMMIT;
+
+EXIT;
+
+CREATE USER movie IDENTIFIED BY password;
+
+SELECT dbmovie FROM user_tables;
+
+alter session set "_ORACLE_SCRIPT"=true;
+
+select * from nom table;
+
+alter user sys identified by password;
+alter user system identified by password;
+
+le commit uniquement sur les data
