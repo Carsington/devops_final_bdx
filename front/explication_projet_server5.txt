@@ -1,0 +1,395 @@
+# Installation de serveur web ou serveur d'application
+
+## Travail à effectuer
+Installer les serveurs suivants dans des VMs séparées.
+
+**Bien noter**:
+- commande(s) d'installation
+- service associé (si aucun le créer)
+- hierarchie de processus
+- interface(s) et port(s) réseau
+- trouver fichier(s) de configuration et essayer de changer le port
+- trouver fichier(s) de logs et vérifier si la rotation des logs 
+	est en place (sinon la mettre en place)
+- accéder à la page d'accueil en interne (avec curl ou wget) 
+	et depuis votre poste windows
+- **bonus**: installer le parefeu ufw et configuer le pour
+accéder à votre serveur (wiki: https://doc.ubuntu-fr.org/ufw)
+	
+**Travail par 2 ou 3 maximum**
+
+## Serveur 1: apache http server
+NB: nommé apache2 chez debian
+- ajouter php et le module mod-php pour apache ;
+vous pouvez tester avec la page suivante info.php à placer dans 
+/var/www/
+
+<?php
+phpinfo();
+?>
+
+## Serveur 2: nginx
+Installer le serveur web nginx et php-fpm.
+Vous pouvez tester la partie php avec la même page info.php que précédemment
+
+## Serveur 3 Tomcat
+Tomcat (9) et Java (jre 11) proposé par debian
+
+## Serveur 4 Tomcat custom
+Télécharger tomcat 10 sur le site d'apache
+et l'installer sur /opt/tomcat/10 avec un JRE 17
+Le service devra tourner avec l'utilisateur tomcat
+
+## Serveur 5 Wildfly
+Télécharger wildfly depuis son site officiel en version 27.0.1.Final (tgz)
+et l'installer sur /opt/wildfly/11 avec un JRE 17
+
+______________________________________________________________________________________
+
+Installer les 5 VM à partir d'un clone Debian 11 LVM pour les 5 serveurs (modifier les mac addresse nat et host only)
+
+1er serveur : Debian 11 LVM Apache
+
+changer le hostname avec la commande sed : fichier /etc/hostname et /etc/hosts
+
+
+"sudo sed -i "s/debian/apacherevision/g" /etc/hostname /etc/hosts" -> "le s devant debian represente substitute le /g global -> tout le fichier"
+
+"sudo reboot"
+
+ludovic@debian:~$ -> ludovic@apacherevision:~$
+
+"sudo apt update"
+"sudo apt search apache2"
+"sudo apt install apache2" pour installer apache2
+
+"sudo apt install php" -> installer php v7.4
+
+"sudo apt install libapache2-mod-php" -> installer librairie php 7.4 pour apache2
+
+"sudo systemctl status apache2"
+"ps -aef | grep apache2" ou "ps -aux | grep apache2"
+
+cd /var/www
+sudo vi info.php
+
+<?php
+phpinfo();
+?>
+
+"sudo vi /etc/apache2/sites-available/000-default.conf"
+
+change document root "/var/www/html" to "/var/www" dans le fichier 000-default.conf
+"sudo systemctl reload apache2"
+
+"sudo netstat -tuplan | grep -i listen"
+
+apache2 n'utilise que les sockets ipv6 et non ipv4 pourtant les adresses ip v4 fonctionne bien.
+
+"sudo vi /etc/apache2/ports.conf"
+
+changer le port 80 -> 8080
+
+sudo vi /etc/apache2/sites-available/000-default.conf
+
+changer le port 80 -> 8080
+
+"sudo systemctl reload apache2"
+
+"ip a" pour voir l'ip
+
+aller sur un navigateur type google chrome. 192.168.186.130:8080
+
+cat /etc/logrotate.d/apache2 pour voir les logs.
+
+## installation du firewall
+sudo apt search ufw
+sudo apt install ufw
+sudo ufw enable -> activer le parefeux
+sudo ufw disable -> le desactiver
+sudo ufw allow 8080/tcp -> autorisé le port 8080 avec le protocle tcp
+sudo ufw allow ssh -> autorisé le port ssh (22 par défault)
+
+sudo ufw status verbose -> pour voir les ports autorisés.
+
+sudo apt install curl
+
+curl 192.168.186.130:8080/info.php ou curl localhost:8080/info.php
+
+
+___________________________________________________
+
+## Serveur 2: nginx
+
+"sudo sed -i "s/debian/nginxrevision/g" /etc/hostname /etc/hosts" -> "le s devant debian represente substitute le /g global -> tout le fichier"
+
+sudo reboot
+sudo apt update
+sudo apt search nginx
+
+sudo apt install nginx
+
+sudo apt search php-fpm
+sudo apt install php-fpm
+
+sudo systemctl status nginx
+sudo systemctl status php7.4-fpm.service
+
+ps -aux | grep nginx
+ps -aux | grep php
+ps -aux | grep fpm
+
+"sudo vi /var/www/info.php"
+
+<?php
+phpinfo();
+?>
+
+"ip a" pour voir l'ip
+
+cd /etc/ngninx/sites-available
+
+sudo vi default
+
+change port listen 80 -> 8080 sur la ligne 22 : listen 8080 default server;
+
+change "root var/www/html;" -> "root var/www;" ligne  41
+
+decommenter la ligne 56,57,60,63 dans le fichier default
+
+cat /etc/logrotate.d/nginx pour voir les logs rotate.
+cat /etc/logrotate.d/php7.4-fpm 
+
+sudo apt install curl
+ip a
+
+curl 192.168.186.153:8080/info.php ou curl localhost:8080/info.php
+
+_________________________________________________
+
+## Serveur 3 Tomcat
+
+sudo sed -i "s/debian/tomcatrevision/g" /etc/hostname /etc/hosts
+
+sudo reboot
+sudo apt update
+sudo apt search tomcat9
+sudo apt install tomcat9
+
+sudo apt search default-jre
+sudo apt install default-jre
+
+sudo cat /etc/tomcat9/server.xml
+
+sudo vi /etc/tomcat9/server.xml
+
+change port 8080 -> 8085 pour tester.
+
+sudo systemctl restart tomcat9
+
+allez sur un navigateur internet
+
+sudo apt install curl
+ip a
+curl 192.168.186.154:8085 pour vérifier si tomcat est bien installé
+
+cat /etc/logrotate.d/tomcat9
+
+vi /lib/system.d/system/tomcat9.service
+
+_________________________________________________
+
+## Serveur 4 Tomcat custom
+
+sudo sed -i "s/debian/tomcatcustomrevision/g" /etc/hostname /etc/hosts
+
+sudo apt update
+
+sudo mkdir -p /opt/tomcat/10
+
+sudo useradd -m -d /opt/tomcat/10 -U -s /bin/false tomcat
+
+cd /tmp
+
+allez prendre le lien ici : https://tomcat.apache.org/download-10.cgi
+
+wget lientar.gz exemple : "wget https://dlcdn.apache.org/tomcat/tomcat-10/v10.1.7/bin/apache-tomcat-10.1.7.tar.gz"
+
+sudo tar xvf apache-tomcat-10.1.7.tar.gz -C /opt/tomcat/10 --strip-components=1
+--strip-components=1 evite de crée un dossier 
+-C /opt/tomcat/10 -c determine le directory le chemin de decompression
+
+"sudo chown -R tomcat:tomcat /opt/tomcat/10"
+"sudo chmod -R u+x /opt/tomcat/10/bin" pas obligé de le faire.
+
+sudo apt search openjdk-17
+sudo apt install openjdk-17-jre
+
+sudo vi /lib/systemd/system/tomcat.service 
+
+[Unit]
+Description=Tomcat
+After=network.target
+
+[Service]
+Type=forking
+
+User=tomcat
+Group=tomcat
+
+Environment="JAVA_HOME=/usr/lib/jvm/java-1.11.0-openjdk-amd64" -> Environment="JAVA_HOME=/usr/lib/jvm/java-1.17.0-openjdk-amd64"
+Environment="JAVA_OPTS=-Djava.security.egd=file:///dev/urandom"
+Environment="CATALINA_BASE=/opt/tomcat" -> Environment="CATALINA_BASE=/opt/tomcat/10"
+Environment="CATALINA_HOME=/opt/tomcat" -> Environment="CATALINA_HOME=/opt/tomcat/10"
+Environment="CATALINA_PID=/opt/tomcat/temp/tomcat.pid" -> Environment="CATALINA_PID=/opt/tomcat/10/temp/tomcat.pid"
+Environment="CATALINA_OPTS=-Xms512M -Xmx1024M -server -XX:+UseParallelGC"
+
+ExecStart=/opt/tomcat/bin/startup.sh -> ExecStart=/opt/tomcat/10/bin/startup.sh
+ExecStop=/opt/tomcat/bin/shutdown.sh -> ExecStop=/opt/tomcat/10/bin/shutdown.sh
+
+RestartSec=10
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+
+sudo systemctl start tomcat
+netstat -tuplan | grep -i listen
+
+allez sur un navigateur internet pour test avec le port 8080 par défault
+
+
+tester avec curl :
+sudo apt install curl
+ip a
+curl 192.168.186.155:8080 pour vérifier si tomcat10 est bien installé
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
