@@ -52,6 +52,12 @@ sudo apt install maven
 wget https://get.jenkins.io/war-stable/2.387.2/jenkins.war
 # Lancer jenkins
 java -jar jenkins.war
+# Vérifier le port en ouvrant une autre page
+sudo netstat -tuplan | grep -i listen
+# Lancer jenkins
+http://192.168.186.132:8080
+
+# Configurer
 
 
 
