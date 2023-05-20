@@ -14,7 +14,10 @@ tar -xzvf movie_angular.tar.gz
 # Se mettre en root
 su -
 # Installer les différents logiciels
-curl -fsSL https://deb.nodesource.com/setup_16.x | bash - &&\ apt-get install -y nodejs
+# --> la commande curl comprend bien les 2 lignes suivantes
+curl -fsSL https://deb.nodesource.com/setup_16.x | bash - &&\
+apt-get install -y nodejs
+
 apt-get install -y build-essential
 apt install npm
 # Se connecter en djawed
